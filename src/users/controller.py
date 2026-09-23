@@ -1,5 +1,5 @@
-from fastapi import HTTPException
-from src.users.dtos import UserSchema
+from fastapi import HTTPException, status
+from src.users.dtos import UserSchema, LoginSchema
 from sqlalchemy.orm import Session
 from src.users.model import User
 from pwdlib import PasswordHash
@@ -34,3 +34,9 @@ def register(data: UserSchema, db:Session):
    db.refresh(user)
 
    return user
+
+def login(credentials:LoginSchema, db:Session):
+   user = db.query(User).filter(credentials.username == User.username).first()
+   if not user:
+      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized username")
+   return "Done"
