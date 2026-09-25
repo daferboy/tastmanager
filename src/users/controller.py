@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Request
 from src.users.dtos import UserSchema, LoginSchema
 from sqlalchemy.orm import Session
 from src.users.model import User
@@ -6,6 +6,7 @@ from pwdlib import PasswordHash
 import jwt
 from datetime import datetime, timedelta
 from src.utils.settings import settings
+from jwt import InvalidTokenError
 
 password_hash = PasswordHash.recommended()
 
@@ -55,8 +56,36 @@ def login(credentials:LoginSchema, db:Session):
 
    exp_time = datetime.now() + timedelta(minutes=settings.EXP_TIME)
 
-   token = jwt.encode({"_user_id": user.id, "username": user.username, "exp": exp_time},settings.SECRET_KEY,settings.ALGORITHM)
+   token = jwt.encode({"_user_id": user.id, "username": user.username, "exp": exp_time.timestamp()},settings.SECRET_KEY,settings.ALGORITHM)
    
    return {
       "token": token
    }
+
+def isauthenticated(request:Request, db:Session):
+   try:
+      token = request.headers['authorization']
+      if not token:
+         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token Expired...")
+
+      # print(request.headers['authorization'])
+      token = (request.headers['authorization'])
+      token = token.split(" ")[-1]
+      # print(token)
+      data = jwt.decode(token, settings.SECRET_KEY, settings.ALGORITHM)
+      # print(data)
+      user_id = data["_user_id"]
+      # exp_time = data["exp"]
+
+      # current_time = datetime.now().timestamp()
+
+      # if current_time > exp_time:
+      #    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Time Out...")
+
+      user = db.query(User).filter(User.id == user_id).first()
+      if not user:
+         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid User ID...")
+
+      return user 
+   except InvalidTokenError:
+      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token Expired...")
