@@ -11,15 +11,15 @@ task_routes = APIRouter(prefix="/tasks")
 
 @task_routes.post("/createtask", response_model=TaskResponseSchema, status_code=status.HTTP_201_CREATED)
 def createtask(data:TaskSchema, db:Session = Depends(get_db), user:User = Depends(isauthenticated)):
-    return controller.createtask(data, db)
+    return controller.createtask(data, db, user)
 
 @task_routes.get("/", response_model=List[TaskResponseSchema], status_code=status.HTTP_200_OK)
 def get_tasks(db:Session = Depends(get_db), user:User = Depends(isauthenticated)):
-    return controller.get_tasks(db)
+    return controller.get_tasks(db, user)
 
 @task_routes.get("/{task_id}", response_model=TaskResponseSchema, status_code=status.HTTP_200_OK)
 def get_task(task_id:int, db:Session = Depends(get_db), user:User = Depends(isauthenticated)):
-    return controller.get_task(task_id,db)
+    return controller.get_task(task_id,db, user)
 
 @task_routes.put("/updatetask/{task_id}", response_model=TaskResponseSchema, status_code=status.HTTP_201_CREATED)
 def update_task(task_id:int, data:TaskSchema, db:Session = Depends(get_db), user:User = Depends(isauthenticated)):

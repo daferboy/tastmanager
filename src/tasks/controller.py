@@ -1,15 +1,17 @@
 from src.tasks.dtos import TaskSchema
 from sqlalchemy.orm import Session
 from src.tasks.models import Task
+from src.users.model import User
 from fastapi import HTTPException
 
-def createtask(data:TaskSchema, db:Session):
+def createtask(data:TaskSchema, db:Session,user:User):
     record = data.model_dump()
     # print(record)
     task = Task(
         title = record['title'],
         description = record['description'],
-        isCompleted = record['isCompleted']
+        isCompleted = record['isCompleted'],
+        user_id = user.id
     )
     db.add(task)
     db.commit()
@@ -20,8 +22,8 @@ def createtask(data:TaskSchema, db:Session):
     # }
     return task
 
-def get_tasks(db:Session):
-    tasks = db.query(Task).all()
+def get_tasks(db:Session,user:User):
+    tasks = db.query(Task).filter(Task.user_id == user.id).all()
     #for task in tasks:
     #   print(task.title, task.description)
     
@@ -31,10 +33,19 @@ def get_tasks(db:Session):
     # }
     return tasks
 
-def get_task(task_id:int, db:Session):
+def get_task(task_id:int, db:Session, user:User):
+
+    if not user or not getattr(user,"id", None):
+        raise HTTPException(status_code=401, detail="Unauthorized to view task")
+
     task = db.query(Task).get(task_id)
+
     if not task:
-        return HTTPException(404, f"Task not found at id {task_id}")
+        return HTTPException(status_code=404, detail=f"Task not found at id {task_id}")
+
+    if task.user_id != user.id:
+        raise HTTPException(status_code=401, detail="Unauthorized to view task")
+    
     # return{
     #     "Status":f"Task found at id {task_id}",
     #     "task":task

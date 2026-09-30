@@ -10,3 +10,4 @@ class TaskResponseSchema(BaseModel):
     title:str
     description:str
     isCompleted: bool
+    user_id:int | None = 0

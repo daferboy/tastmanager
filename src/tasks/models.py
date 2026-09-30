@@ -1,4 +1,4 @@
-from sqlalchemy import Column,Integer,String,Boolean, DateTime
+from sqlalchemy import Column,Integer,String,Boolean, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from src.utils.database import Base
 
@@ -26,4 +26,8 @@ class Task(Base):
     createdAt = Column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id",ondelete="CASCADE")
     )
